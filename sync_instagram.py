@@ -56,62 +56,69 @@ def main():
             context.add_cookies(playwright_cookies)
 
         page = context.new_page()
-        print(f"Acessando perfil de @{username} (Aba Reels)...")
+        print(f"Acessando Reels de @{username} com ordenação cronológica estrita...")
 
         try:
             page.goto(f"https://www.instagram.com/{username}/reels/", wait_until="domcontentloaded", timeout=60000)
-            time.sleep(6)
+            time.sleep(5)
 
-            # Rola a página para carregar todos os 12 vídeos
-            for _ in range(8):
-                page.mouse.wheel(0, 1000)
-                time.sleep(2)
+            # Varredura progressiva ordenada por coordenadas visuais
+            for scroll_step in range(8):
+                raw_items = page.evaluate("""() => {
+                    const links = Array.from(document.querySelectorAll("a[href*='/reel/'], a[href*='/p/']"));
+                    return links.map(el => {
+                        const rect = el.getBoundingClientRect();
+                        const isPinned = !!el.querySelector("svg[aria-label*='Pin'], svg[aria-label*='Fixado'], svg[title*='Pin'], svg[title*='Fixado'], svg[aria-label*='Pinned']");
+                        return {
+                            href: el.getAttribute('href'),
+                            top: Math.round(rect.top + window.scrollY),
+                            left: Math.round(rect.left),
+                            isPinned: isPinned
+                        };
+                    });
+                }""")
 
-            elements = page.query_selector_all("a[href*='/reel/'], a[href*='/p/']")
-            
-            for el in elements:
-                is_pinned = False
-                try:
-                    pin_elem = el.query_selector("svg[aria-label*='Pin'], svg[aria-label*='Fixado'], svg[title*='Pin'], svg[title*='Fixado']")
-                    if pin_elem:
-                        is_pinned = True
-                except Exception:
-                    pass
+                # Ordena rigorosamente: primeiro por linha (top), depois por coluna (left)
+                raw_items.sort(key=lambda item: (item['top'], item['left']))
 
-                if is_pinned:
-                    print("📌 Post fixado ignorado.")
-                    continue
+                for item in raw_items:
+                    if item.get("isPinned"):
+                        continue
+                    href = item.get("href")
+                    if href:
+                        full_url = f"https://www.instagram.com{href}" if href.startswith("/") else href
+                        clean_url = full_url.split("?")[0]
+                        if clean_url not in reels_urls:
+                            reels_urls.append(clean_url)
 
-                href = el.get_attribute("href")
-                if href:
-                    full_url = f"https://www.instagram.com{href}" if href.startswith("/") else href
-                    clean_url = full_url.split("?")[0]
-                    if clean_url not in reels_urls:
-                        reels_urls.append(clean_url)
-                
                 if len(reels_urls) >= target_count:
                     break
+
+                page.mouse.wheel(0, 800)
+                time.sleep(2)
 
         except Exception as e:
             print(f"Aviso durante navegação: {e}")
 
         browser.close()
 
-    print(f"\nTotal de Reels cronológicos localizados: {len(reels_urls)}")
+    reels_urls = reels_urls[:target_count]
+    print(f"\nTotal de Reels identificados em ordem cronológica: {len(reels_urls)}")
+    for i, url in enumerate(reels_urls, 1):
+        print(f"  #{i} -> {url}")
 
     if not reels_urls:
-        print("❌ Nenhum post foi identificado.")
+        print("❌ Nenhum Reel foi identificado.")
         return
 
     posts_data = []
-    allowed_videos = [f"video_{i}.mp4" for i in range(1, len(reels_urls[:target_count]) + 1)]
+    allowed_videos = [f"video_{i}.mp4" for i in range(1, len(reels_urls) + 1)]
 
-    for idx, reel_url in enumerate(reels_urls[:target_count], start=1):
-        print(f"\n--- Processando Reel #{idx}: {reel_url} ---")
+    for idx, reel_url in enumerate(reels_urls, start=1):
+        print(f"\n--- Baixando Reel #{idx} (Mais recente): {reel_url} ---")
         output_filename = f"video_{idx}.mp4"
         temp_raw = f"temp_raw_{idx}.mp4"
 
-        # 1. Download do vídeo bruto
         cmd_download = [
             "yt-dlp",
             "--cookies", cookie_file,
@@ -123,7 +130,6 @@ def main():
         ]
         subprocess.run(cmd_download, capture_output=True, text=True)
 
-        # 2. Compressão otimizada com FFmpeg (720p, H.264 leve e FastStart)
         if os.path.exists(temp_raw):
             cmd_ffmpeg = [
                 "ffmpeg", "-y",
@@ -158,7 +164,7 @@ def main():
     if os.path.exists(cookie_file):
         os.remove(cookie_file)
 
-    print("\n✅ Concluído! 12 Reels verticais comprimidos em 720p e salvos com sucesso.")
+    print("\n✅ Concluído! 12 Reels em ordem cronológica perfeita salvos com sucesso.")
 
 if __name__ == "__main__":
     main()
