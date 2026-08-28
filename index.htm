@@ -33,6 +33,7 @@
       height: 100%;
       object-fit: cover;
       display: block;
+      background-color: #000000;
     }
     .progress-bar-container {
       position: absolute;
@@ -54,7 +55,7 @@
 <body>
 
   <div class="video-container">
-    <video id="player" autoplay playsinline muted preload="auto"></video>
+    <video id="player" autoplay playsinline muted loop preload="auto"></video>
     <div class="progress-bar-container">
       <div class="progress-bar" id="progress"></div>
     </div>
@@ -70,7 +71,7 @@
     let consecutiveErrors = 0;
     const maxConsecutiveErrors = 5;
 
-    // Tratamento de falhas e reconexão de rede
+    // Tratamento de falhas e reconexão automática
     player.addEventListener('error', () => {
       consecutiveErrors++;
       if (consecutiveErrors >= maxConsecutiveErrors) {
@@ -107,6 +108,7 @@
       }
     }
 
+    // Barra de progresso do vídeo
     player.addEventListener('timeupdate', () => {
       if (player.duration) {
         const pct = (player.currentTime / player.duration) * 100;
@@ -114,10 +116,18 @@
       }
     });
 
+    // Fallback de reinício caso o loop nativo do navegador falhe
     player.addEventListener('ended', () => {
       player.currentTime = 0;
       player.play().catch(e => console.log('Erro ao reiniciar:', e));
     });
+
+    // Verificação de segurança: se o vídeo pausar sozinho antes da troca de tela, força o play
+    setInterval(() => {
+      if (player.paused && player.readyState >= 2) {
+        player.play().catch(() => {});
+      }
+    }, 2000);
 
     loadVideo();
   </script>
