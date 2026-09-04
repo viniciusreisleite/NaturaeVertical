@@ -1,0 +1,99 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mural Digital - Naturae NutriBar (Vertical)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body, html {
+      width: 100vw;
+      height: 100vh;
+      background-color: #000;
+      overflow: hidden;
+    }
+
+    .fullscreen-container {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #000;
+      position: relative;
+    }
+
+    #image-player, #player {
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      display: none;
+      background-color: #000;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="fullscreen-container">
+    <img id="image-player" alt="Mural Vertical" />
+    <video id="player" autoplay playsinline muted loop preload="auto">
+      <source id="video-source" src="" type="video/mp4">
+    </video>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const timestamp = Date.now();
+      const player = document.getElementById('player');
+      const videoSource = document.getElementById('video-source');
+      const imagePlayer = document.getElementById('image-player');
+
+      try {
+        const response = await fetch(`data.json?t=${timestamp}`);
+        const posts = await response.json();
+        if (!Array.isArray(posts) || posts.length === 0) return;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const postParam = urlParams.get('post');
+        const postIdx = parseInt(postParam, 10);
+
+        let currentPost = posts[0];
+        if (!isNaN(postIdx)) {
+          currentPost = posts.find(p => p.id === postIdx || String(p.id) === String(postIdx)) || posts[postIdx - 1] || posts[0];
+        }
+
+        const midiaArquivo = currentPost.media || currentPost.media_file || currentPost.video_file;
+        const isFoto = currentPost.type === 'image' || (midiaArquivo && (midiaArquivo.endsWith('.jpg') || midiaArquivo.endsWith('.png')));
+
+        if (isFoto) {
+          if (player) {
+            player.pause();
+            player.style.display = 'none';
+          }
+          if (imagePlayer) {
+            imagePlayer.style.display = 'block';
+            imagePlayer.src = `${midiaArquivo}?t=${timestamp}`;
+          }
+        } else {
+          if (imagePlayer) {
+            imagePlayer.style.display = 'none';
+          }
+          if (player && videoSource) {
+            player.style.display = 'block';
+            videoSource.src = `${midiaArquivo}?t=${timestamp}`;
+            player.load();
+            player.play().catch(e => console.log('Autoplay:', e));
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao carregar mídia do mural vertical:', err);
+      }
+    });
+  </script>
+</body>
+</html>
