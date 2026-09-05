@@ -3,127 +3,49 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mural Digital - Naturae NutriBar (Vertical)</title>
+  <title>Mural Vertical - Naturae NutriBar</title>
   <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
-
     body, html {
-      width: 100vw;
-      height: 100vh;
-      background-color: #000;
+      width: 100%;
+      height: 100%;
       overflow: hidden;
+      background-color: #000;
     }
-
-    .fullscreen-container {
+    .tv-container-vertical {
       width: 100vw;
       height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: #000;
       position: relative;
-    }
-
-    #image-player, #player {
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
-      display: none;
-      background-color: #000;
-    }
-      /* Motor de auto-scroll TV */
-    .info-section {
-      display: flex !important;
-      flex-direction: column !important;
-      height: 100vh !important;
-      max-height: 100vh !important;
-      overflow: hidden !important;
-      box-sizing: border-box !important;
-    }
-    .caption-container {
-      flex: 1 1 auto !important;
-      height: 0 !important;
-      overflow-y: scroll !important;
-      scrollbar-width: none !important;
-      -ms-overflow-style: none !important;
-      position: relative !important;
-      margin-top: 1.5rem !important;
-    }
-    .caption-container::-webkit-scrollbar {
-      display: none !important;
-    }
-    .caption-box {
-      font-size: 2.2vw !important;
-      line-height: 1.45 !important;
-      font-weight: 600 !important;
-      word-wrap: break-word !important;
-      white-space: pre-line !important;
-      padding-bottom: 6rem !important;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     video, #image-player {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
       background: #000 !important;
       background-color: #000 !important;
+      display: block;
     }
   </style>
 </head>
 <body>
 
-  <div class="fullscreen-container">
-    <img id="image-player" alt="Mural Vertical" />
+  <div class="tv-container-vertical">
+    <img id="image-player" style="display:none;" />
     <video id="player" autoplay playsinline muted loop preload="auto">
       <source id="video-source" src="" type="video/mp4">
     </video>
   </div>
 
-    <script>
-    function iniciarAutoScroll(container) {
-      if (!container) return;
-      if (window.__scrollInterval) clearInterval(window.__scrollInterval);
-      if (window.__scrollTimer) clearTimeout(window.__scrollTimer);
-
-      container.scrollTop = 0;
-
-      window.__scrollTimer = setTimeout(() => {
-        const diferenca = container.scrollHeight - container.clientHeight;
-        if (diferenca > 15) {
-          let descendo = true;
-          let pausado = false;
-
-          window.__scrollInterval = setInterval(() => {
-            if (pausado) return;
-
-            if (descendo) {
-              container.scrollTop += 1;
-              if (container.scrollTop >= diferenca) {
-                pausado = true;
-                setTimeout(() => {
-                  descendo = false;
-                  pausado = false;
-                }, 3000); // 3s no fim da leitura
-              }
-            } else {
-              container.scrollTop -= 3;
-              if (container.scrollTop <= 0) {
-                container.scrollTop = 0;
-                descendo = true;
-                pausado = true;
-                setTimeout(() => {
-                  pausado = false;
-                }, 3500); // 3.5s no topo antes de novo ciclo
-              }
-            }
-          }, 35);
-        }
-      }, 2500);
-    }
-
+  <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      const containerElem = document.getElementById('caption-container');
-      const captionElem = document.getElementById('caption-text');
       const player = document.getElementById('player');
       const videoSource = document.getElementById('video-source');
       const imagePlayer = document.getElementById('image-player');
@@ -132,17 +54,14 @@
       let posts = [];
 
       try {
-        const response = await fetch(./data.json?t= + timestamp);
-        if (!response.ok) throw new Error(HTTP  + response.status);
+        const response = await fetch(`./data.json?t=${timestamp}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         posts = await response.json();
       } catch (err) {
         console.error("Erro ao carregar data.json:", err);
       }
 
-      if (!Array.isArray(posts) || posts.length === 0) {
-        if (captionElem) captionElem.textContent = "Não foi possível carregar as informações.";
-        return;
-      }
+      if (!Array.isArray(posts) || posts.length === 0) return;
 
       const urlParams = new URLSearchParams(window.location.search);
       const postParam = urlParams.get('post');
@@ -151,13 +70,6 @@
       let currentPost = posts[0];
       if (!isNaN(postIdx)) {
         currentPost = posts.find(p => p.id === postIdx || String(p.id) === String(postIdx)) || posts[postIdx - 1] || posts[0];
-      }
-
-      let texto = currentPost.caption || currentPost.text || '';
-      texto = texto.replace(/\n{3,}/g, '\n\n').trim();
-      if (captionElem) {
-        captionElem.textContent = texto;
-        iniciarAutoScroll(containerElem);
       }
 
       const midiaArquivo = currentPost.media || currentPost.media_file || currentPost.video_file;
@@ -170,7 +82,7 @@
         }
         if (imagePlayer) {
           imagePlayer.style.display = 'block';
-          imagePlayer.src = ./ + midiaArquivo + ?t= + timestamp;
+          imagePlayer.src = `./${midiaArquivo}?t=${timestamp}`;
         }
       } else {
         if (imagePlayer) imagePlayer.style.display = 'none';
@@ -184,7 +96,7 @@
             player.play().catch(() => {});
           };
 
-          videoSource.src = ./ + midiaArquivo + ?t= + timestamp;
+          videoSource.src = `./${midiaArquivo}?t=${timestamp}`;
           player.load();
           player.play().catch(e => console.log('Autoplay:', e));
         }
