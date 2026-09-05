@@ -19,13 +19,17 @@
     .tv-container-vertical {
       width: 100vw;
       height: 100vh;
+      max-width: 100vw;
+      max-height: 100vh;
       position: relative;
       background: #000;
       display: flex;
       justify-content: center;
       align-items: center;
+      overflow: hidden;
     }
-    video, #image-player {
+    /* Proporção 9:16 (1080x1920) sem cortes */
+    video {
       width: 100%;
       height: 100%;
       object-fit: cover;
@@ -33,12 +37,24 @@
       background-color: #000 !important;
       display: block;
     }
+    #image-player {
+      width: 100%;
+      height: 100%;
+      max-width: 1080px;
+      max-height: 1920px;
+      aspect-ratio: 9 / 16;
+      object-fit: contain;
+      background: #000 !important;
+      background-color: #000 !important;
+      margin: auto;
+      display: block;
+    }
   </style>
 </head>
 <body>
 
   <div class="tv-container-vertical">
-    <img id="image-player" style="display:none;" />
+    <img id="image-player" style="display:none;" alt="Post Naturae" />
     <video id="player" autoplay playsinline muted loop preload="auto">
       <source id="video-source" src="" type="video/mp4">
     </video>
