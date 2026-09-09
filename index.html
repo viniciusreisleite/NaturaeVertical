@@ -107,6 +107,17 @@
           player.style.backgroundColor = '#000';
           player.loop = true;
 
+              // Auto-ajuste dinâmico: vertical (9:16) ou horizontal/quadrado (layout flexível)
+              player.onloadedmetadata = function() {
+                if (player.videoWidth >= player.videoHeight) {
+                  mainContainer.classList.remove('is-video');
+                  mainContainer.classList.add('is-image');
+                } else {
+                  mainContainer.classList.remove('is-image');
+                  mainContainer.classList.add('is-video');
+                }
+              };
+
           player.onended = () => {
             player.currentTime = 0;
             player.play().catch(() => {});
