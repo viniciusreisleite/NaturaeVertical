@@ -43,7 +43,7 @@
       max-width: 1080px;
       max-height: 1920px;
       aspect-ratio: 9 / 16;
-      object-fit: cover;
+      object-fit: contain;
       background: #000 !important;
       background-color: #000 !important;
       margin: auto;
@@ -55,7 +55,7 @@
 
   <div class="tv-container-vertical">
     <img id="image-player" style="display:none;" alt="Post Naturae" />
-    <video id="player" autoplay playsinline muted loop preload="auto" defaultMuted playsinline muted autoplay>
+    <video id="player" autoplay playsinline muted loop preload="auto">
       <source id="video-source" src="" type="video/mp4">
     </video>
   </div>
@@ -107,17 +107,6 @@
           player.style.backgroundColor = '#000';
           player.loop = true;
 
-              // Auto-ajuste dinâmico: vertical (9:16) ou horizontal/quadrado (layout flexível)
-              player.onloadedmetadata = function() {
-                if (player.videoWidth >= player.videoHeight) {
-                  mainContainer.classList.remove('is-video');
-                  mainContainer.classList.add('is-image');
-                } else {
-                  mainContainer.classList.remove('is-image');
-                  mainContainer.classList.add('is-video');
-                }
-              };
-
           player.onended = () => {
             player.currentTime = 0;
             player.play().catch(() => {});
@@ -132,6 +121,3 @@
   </script>
 </body>
 </html>
-
-
-
