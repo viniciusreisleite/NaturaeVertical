@@ -93,8 +93,9 @@
 
       if (isFoto) {
         if (player) {
-          player.pause();
-          player.style.display = 'none';
+              player.pause();
+              player.removeAttribute('src');
+              player.style.setProperty('display', 'none', 'important');
         }
         if (imagePlayer) {
           imagePlayer.style.display = 'block';
